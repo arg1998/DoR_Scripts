@@ -41,7 +41,7 @@ def normalize_index(x):
 
 
 # personal token, change it
-token = "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"
+token = None # replace your token here
 
 # file regression
 FILE_REGEX = '\[.*\]\((https:\/\/github.com\/bhermann\/DoR\/files\/.*)\)'

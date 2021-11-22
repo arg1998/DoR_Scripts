@@ -75,7 +75,7 @@ def cal_kappa(table, rater):
 
 def main():
     # personal token, change it
-    token = "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"
+    token = None # replace your token here
 
     # file regression
     FILE_REGEX = '\[.*\]\((https:\/\/github.com\/bhermann\/DoR\/files\/.*)\)'
@@ -84,12 +84,6 @@ def main():
     with open("kappa_result_test1.csv", 'w', encoding="latin-1", newline='') as f:
         writer = csv.writer(f, delimiter=',')
         writer.writerow(['issue_id', 'submissions', 'available submissions', 'paper doi', 'kappa'])
-
-        # good_list_70th = ['jiangyy12', 'het-patel99', 'rohan22shah', 'ashwith161', 'AgrawalBhavya', 'tianyiccong',
-        #                   'Harikrishnaselvaraj', 'kingan1', 'War-Keeper', 'gargvarun250', 'joshlin5', 'rhnprabhune',
-        #                   'anshulp2912', 'zhijin44', 'ParthJinturkar', 'Capt-Fluffy-Bug', 'nehaAgarwal96', '05sandesh',
-        #                   'krishnasaurabh', 'freakleesin', 'TheStarTiger', 'akhilkumarmengani', 'Urvashi74',
-        #                   'Fishish', 'snapcat', 'rakeshavm', 'vijdurk']
 
         # issue_list = [267, 254, 253, 252, 251, 250, 240, 239, 238, 237, 201, 200, 199, 198, 197, 196, 195, 194,
         #               193, 192, 191, 190, 189, 188, 187, 186, 185, 176, 175, 174, 173, 172, 171, 170, 169, 168,
