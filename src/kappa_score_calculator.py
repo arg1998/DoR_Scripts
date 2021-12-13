@@ -1,3 +1,7 @@
+###
+### Kappa Score Calculator  
+###
+
 import requests
 import os
 import re
@@ -9,6 +13,8 @@ import math
 from statsmodels.stats.inter_rater import fleiss_kappa
 import matplotlib.pyplot as plt
 import string
+import config
+
 
 def normalize_doi(x):
     """
@@ -33,6 +39,7 @@ def normalize_doi(x):
 
     return x
 
+
 def normalize_index(x):
     """
     Normalizes a citation. Adds in square brackets on each side
@@ -54,6 +61,7 @@ def normalize_index(x):
         x = f'{x}]'
     return x
 
+
 def cal_kappa(table, rater):
     observed_agreement = 0
 
@@ -74,42 +82,32 @@ def cal_kappa(table, rater):
 
 
 def main():
-    # personal token, change it
-    token = None # replace your token here
 
-    # file regression
-    FILE_REGEX = '\[.*\]\((https:\/\/github.com\/bhermann\/DoR\/files\/.*)\)'
-    # FILE_REGEX = '\[.*\]\((https:\/\/github.com\/XiaoLing941212\/DoR-CSC510\/files\/.*)\)'
-
-    with open("kappa_result_test1.csv", 'w', encoding="latin-1", newline='') as f:
+    with open("kappa_scores.csv", 'w', encoding="latin-1", newline='') as f:
         writer = csv.writer(f, delimiter=',')
         writer.writerow(['issue_id', 'submissions', 'available submissions', 'paper doi', 'kappa'])
 
-        # issue_list = [267, 254, 253, 252, 251, 250, 240, 239, 238, 237, 201, 200, 199, 198, 197, 196, 195, 194,
-        #               193, 192, 191, 190, 189, 188, 187, 186, 185, 176, 175, 174, 173, 172, 171, 170, 169, 168,
-        #               167, 166, 165, 164, 163, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146,
-        #               145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128,
-        #               127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110,
-        #               109, 108, 107, 106, 105, 104, 103, 101, 100, 99, 98]
-        issue_list = [197]
-
-        for i in issue_list:
+        for i in config.ISSUE_LIST:
             print("current in issue", i)
             query_url = f"https://api.github.com/repos/bhermann/DoR/issues/{i}/comments"
-            # query_url = f"https://api.github.com/repos/XiaoLing941212/DoR-CSC510/issues/{i}/comments"
             params = {
                 "state": "open",
             }
-            headers = {'Authorization': f'token {token}'}
+            headers = {'Authorization': f'token {config.TOKEN}'}
             r = requests.get(query_url, headers=headers, params=params)
 
             result = r.json()
 
-            ### start to record links
+            # start to record links
             links = []
 
             for comment in result:
-                link = re.findall(FILE_REGEX, comment['body'])
+                # ignore specified comments in the config.py file
+                if str(comment["id"]) in config.IGNORED_COMMENTS:
+                    print(F">>> Ignored comment: {comment['html_url']}")
+                    continue
+
+                link = re.findall(config.FILE_PATTERN, comment['body'])
 
                 if len(link) > 0:
                     user = comment['user']['login']
@@ -131,7 +129,7 @@ def main():
             # initialize available submissions
             available_submission = 0
 
-            ### process each file in the links list
+            # process each file in the links list
             for item in links:
                 r_file = requests.get(item[1])
 
@@ -141,7 +139,7 @@ def main():
                         StringIO(r_file.content.decode('latin-1')), low_memory=False
                     )
                 except pd.errors.ParserError:
-                    print('Parse error in issue ', i)
+                    print(F">>> Parse error in issue {comment['html_url']} ")
                     continue
 
                 df.columns = [x.strip() for x in df.columns]
@@ -154,8 +152,8 @@ def main():
                         if row['paper_doi'] not in unique_paper_doi:
                             unique_paper_doi.append(row['paper_doi'])
 
-                    if len(unique_paper_doi) > 11:
-                        print("result file contains more than 11 papers.")
+                    if len(unique_paper_doi) > config.WP_SIZE:
+                        print(F">>> file on {comment['html_url']} contains more than {config.WP_SIZE} papers")
                         continue
                 except KeyError:
                     continue
@@ -164,7 +162,7 @@ def main():
                 try:
                     df.dropna(axis=0, inplace=True, subset=['paper_doi'])
                 except KeyError as err:
-                    print("Error in dumping paper_doi ", err)
+                    print(F">>> Error in dumping paper_doi {comment['html_url']} * error:", err)
 
                 # Normalize the paper DOIs
                 try:
@@ -178,12 +176,12 @@ def main():
                             temp_doi.append(normalize_doi(x))
 
                     if find_broken:
-                        print("has broken doi")
+                        print(F">>> file on ({comment['html_url']}) has broken DOI")
                         continue
                     else:
                         df['paper_doi'] = temp_doi
                 except:
-                    print("Error in normalizing paper_doi ", err)
+                    print(F">>> Error in normalizing paper_doi {comment['html_url']} * error:", err)
                     continue
 
                 # now at this step, the file can process
@@ -254,12 +252,13 @@ def main():
                     if not df.empty:
                         kappa = min(1., round(fleiss_kappa(df.to_numpy(), 'uniform'), 2))
                         # kappa = min(1.00, round(cal_kappa(df, available_submission), 3))
-                        print("k: ", k)
-                        print(df)
-                        print("kappa: ", kappa)
-                        print(" ")
+                        # print("k: ", k)
+                        # print(df)
+                        # print("kappa: ", kappa)
+                        # print(" ")
 
                         writer.writerow([i, submissions, available_submission, k, kappa])
+   
 
 
 if __name__ == "__main__":
