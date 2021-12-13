@@ -224,4 +224,4 @@ for i in config.ISSUE_LIST:
             #     has_error = 1
             #     write_row[13] = write_row[13] + "There exists empty cell(s) in page_num column, please put conference page number for each reuse."
 
-found_errors.to_csv("found_errors.csv")
+found_errors.to_csv("wp_validation_results.csv")

@@ -83,7 +83,7 @@ def cal_kappa(table, rater):
 
 def main():
 
-    with open("kappa_scores.csv", 'w', encoding="latin-1", newline='') as f:
+    with open("kappa_scores_results.csv", 'w', encoding="latin-1", newline='') as f:
         writer = csv.writer(f, delimiter=',')
         writer.writerow(['issue_id', 'submissions', 'available submissions', 'paper doi', 'kappa'])
 
